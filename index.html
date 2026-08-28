@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KTB's Nonveg Culinary Journey</title>
+    <style>
+        :root {
+            --primary: #800020;
+            --primary-dark: #5a0017;
+            --accent: #d4af37;
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --text-light: #f4f4f4;
+            --text-muted: #b0b0b0;
+            --border-color: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 18, 18, 0.96);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            border: 2px solid var(--accent);
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .auth-card h2 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-size: 1.6rem;
+        }
+
+        .auth-card p {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 12px 15px;
+            background: #2a2a2a;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .auth-card input:focus {
+            border-color: var(--accent);
+        }
+
+        .auth-card button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .auth-card button:hover {
+            background: var(--primary-dark);
+        }
+
+        .error-msg {
+            color: #ff6b6b;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        #app-container {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-dark), #2a0008);
+            border-bottom: 3px solid var(--accent);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            color: var(--accent);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            font-style: italic;
+        }
+
+        .toolbar {
+            background: var(--card-bg);
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 600px;
+            min-width: 280px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            background: #2a2a2a;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+        }
+
+        main {
+            flex: 1;
+            padding: 30px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            border-color: var(--accent);
+        }
+
+        .card-img-container {
+            width: 100%;
+            height: 220px;
+            background: #252525;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .card:hover .card-img-container img {
+            transform: scale(1.05);
+        }
+
+        .badge-kcal {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(128, 0, 32, 0.9);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border: 1px solid var(--accent);
+            backdrop-filter: blur(4px);
+        }
+
+        .card-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .card-title {
+            color: var(--accent);
+            font-size: 1.3rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .section-block h4 {
+            color: #ffccd5;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .section-block p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            padding-left: 15px;
+        }
+
+        footer.site-footer {
+            text-align: center;
+            padding: 20px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Authentication Screen -->
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <h2>Authentication Required</h2>
+            <p>Enter today's dynamic access code (DDMM format)</p>
+            <input type="password" id="password-input" placeholder="••••" autocomplete="current-password">
+            <button onclick="verifyPassword()">Access Journey</button>
+            <div id="error-message" class="error-msg">Incorrect password. Please try again.</div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app-container">
+        <header>
+            <h1>Welcome to KTB's Nonveg Culinary Journey</h1>
+            <p>Explore rigorous scientific classifications, precise nutritional breakdowns, and traditional culinary methods across 25 master recipes[cite: 1].</p>
+        </header>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search 1. Dish | 2. Kcals | 3. Ingredients | 4. Scientific classification | 5. Cooking methods..." onkeyup="filterDishes()">
+            </div>
+        </div>
+
+        <main>
+            <div class="grid" id="dishes-grid"></div>
+        </main>
+
+        <footer class="site-footer">
+            <p>&copy; 2026 KTB's Nonveg Culinary Journey. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        const dishes = [
+            {
+                name: "1. Butter Chicken or Murgh Makhani",
+                kcal: "585 Kcals",
+                image: "https://i.imghippo.com/files/Envz7707pus.png",
+                ingredients: "Chicken (180g), Tomatoes (100g), Heavy Cream (30g), Butter (20g), Yogurt (25g), Ginger-Garlic Paste (10g), Onions (20g), Spices & Kasuri Methi (10g), Fresh Coriander (5g)[cite: 1].",
+                scientific: "Gallus gallus domesticus (Chicken), Bos taurus milk (Butter, Cream, Yogurt), Solanum lycopersicum (Tomato), Allium cepa & sativum (Onion & Garlic)[cite: 1].",
+                cooking: "Marinate chicken in yogurt, lemon juice, spices & grill. Boil/blend tomatoes & onions into puree, simmer in butter with spices, fold in chicken, cream & fenugreek leaves[cite: 1]."
+            },
+            {
+                name: "2. Chettinad Pepper Chicken",
+                kcal: "410 Kcals",
+                image: "https://i.imghippo.com/files/xQg6101txc.png",
+                ingredients: "Chicken (150g), Shallots (40g), Black Peppercorns (8g), Cooking Oil (15g), Ginger-Garlic Paste (10g), Tomatoes (15g), Fennel, Cumin, Coriander, Cloves, Cinnamon, Turmeric, Salt (7g), Curry & Coriander Leaves (5g)[cite: 1].",
+                scientific: "Gallus gallus domesticus (Chicken), Sesamum indicum / Arachis hypogaea (Oil), Allium cepa (Shallots), Piper nigrum (Black Pepper)[cite: 1].",
+                cooking: "Dry roast and grind whole peppercorns and spices. Sauté curry leaves and shallots in oil, add ginger-garlic, tomatoes, chicken, and coat with freshly ground pepper masala[cite: 1]."
+            },
+            {
+                name: "3. Chicken biriyani",
+                kcal: "650 Kcals",
+                image: "https://i.imghippo.com/files/uCW3975vFw.png",
+                ingredients: "Basmati Rice (150g), Chicken (160g), Ghee/Oil (20g), Onions (50g), Yogurt (30g), Tomatoes & Ginger-Garlic Paste (30g), Cashews/Almonds (15g), Whole Spices & Saffron (25g), Mint & Coriander (20g)[cite: 1].",
+                scientific: "Oryza sativa (Basmati Rice), Gallus gallus domesticus (Chicken), Bos taurus (Ghee/Yogurt), Anacardium occidentale / Prunus dulcis (Cashews/Almonds)[cite: 1].",
+                cooking: "Parboil basmati rice with whole spices. Marinate chicken with yogurt, spices & herbs. Layer spiced chicken base with half-cooked rice, ghee, saffron, and sealed dum cooking[cite: 1]."
+            },
+            {
+                name: "4. Chicken Fried Rice",
+                kcal: "583 Kcals",
+                image: "https://i.imghippo.com/files/qOo3977enw.png",
+                ingredients: "Cooked Rice (220g), Chicken (90g), Carrots, Beans, Spring Onions, Cabbage (60g), Cooking Oil (15g), Eggs (40g), Soy Sauce, Vinegar & Garlic (15g), Salt & White Pepper (10g)[cite: 1].",
+                scientific: "Oryza sativa (Rice), Gallus gallus domesticus (Chicken & Egg), Sesamum indicum / Glycine max (Oil/Soy), Daucus carota, Phaseolus vulgaris, Brassica oleracea[cite: 1].",
+                cooking: "Stir-fry diced chicken and scrambled eggs. Flash-fry minced garlic, white spring onions, and crisp diced vegetables in a blazing wok, then toss vigorously with pre-cooked rice and soy sauce[cite: 1]."
+            },
+            {
+                name: "5. Chicken Gravy or Kari",
+                kcal: "565 Kcals",
+                image: "https://i.imghippo.com/files/jIsP5792mK.png",
+                ingredients: "Chicken (150g), Onions (50g), Tomatoes (40g), Groundnut/Sesame Oil (20g), Ginger-Garlic Paste (12g), Turmeric, Chili, Coriander, Garam Masala (10g), Coriander Leaves (8g), Water & Salt[cite: 1].",
+                scientific: "Gallus gallus domesticus (Chicken), Arachis hypogaea / Sesamum indicum (Oil), Allium cepa (Onion), Solanum lycopersicum (Tomato), Curcuma longa (Turmeric)[cite: 1].",
+                cooking: "Sauté sliced onions and ginger-garlic paste until golden. Add tomatoes, turmeric, ground spices, sear chicken pieces, pour water, and simmer into a rich curry[cite: 1]."
+            },
+            {
+                name: "6. Chicken noodles",
+                kcal: "700 Kcals",
+                image: "https://i.imghippo.com/files/FVuS1769U.png",
+                ingredients: "Egg Noodles (130g), Shredded Chicken (110g), Chicken Broth (150g), Carrots, Celery, Onions (45g), Butter (10g), Black Pepper, Garlic, Salt, Thyme (5g), Fresh Parsley[cite: 1].",
+                scientific: "Triticum aestivum (Wheat/Noodles), Gallus gallus domesticus (Chicken), Bos taurus (Butter), Daucus carota, Apium graveolens, Allium cepa[cite: 1].",
+                cooking: "Sauté mirepoix (onions, carrots, celery) in butter. Pour in chicken broth with thyme and garlic, poach chicken and shred, add noodles to bubbling broth, and return chicken with parsley[cite: 1]."
+            },
+            {
+                name: "7. Chicken Pizza",
+                kcal: "61 Kcals",
+                image: "https://i.imghippo.com/files/og9983oOM.png",
+                ingredients: "Wheat Flour (10g), Diced Chicken (6g), Mozzarella Cheese (5g), Tomato Puree (3g), Olive Oil (1.5g), Oregano, Garlic, Salt, Pepper (0.8g)[cite: 1].",
+                scientific: "Triticum aestivum (Wheat dough), Gallus gallus domesticus (Chicken), Bos taurus (Mozzarella), Olea europaea (Olive Oil), Solanum lycopersicum (Tomato)[cite: 1].",
+                cooking: "Knead fermented wheat dough, roll out base, spread seasoned tomato puree, top with mozzarella cheese and cooked diced chicken, and bake at high heat until crust is crisp[cite: 1]."
+            },
+            {
+                name: "8. Chicken Zinger Burger",
+                kcal: "439 Kcals",
+                image: "https://i.imghippo.com/files/zsW6004ObY.png",
+                ingredients: "Wheat Bun (70g), Breaded Chicken Breast Patty (90g), Mayonnaise (25g), Lettuce (15g), Cooking Oil (10g), Paprika, Black Pepper, Garlic Powder, Salt (5g)[cite: 1].",
+                scientific: "Triticum aestivum (Wheat bun & coating), Gallus gallus domesticus (Chicken), Glycine max / Helianthus annuus (Oil/Mayo), Lactuca sativa (Lettuce)[cite: 1].",
+                cooking: "Marinate chicken fillet, double-dusted in seasoned wheat flour and batter, deep-fry until golden and crispy. Toast wheat buns, assemble with mayonnaise, lettuce, and hot patty[cite: 1]."
+            },
+            {
+                name: "9. Chilly Chicken",
+                kcal: "693 Kcals",
+                image: "https://i.imghippo.com/files/mFSK8827lM.png",
+                ingredients: "Chicken (120g), Bell Peppers / Capsicum (35g), Onions (25g), Cooking Oil (18g), Soy Sauce, Vinegar, Chili Paste (15g), Ginger, Garlic, Green Chillies (7g), Cornstarch/Wheat Flour (10g)[cite: 1].",
+                scientific: "Zea mays (Cornstarch), Gallus gallus domesticus (Chicken), Sesamum indicum / Glycine max (Oil/Soy), Capsicum annuum (Bell pepper/Chili), Allium cepa (Onion)[cite: 1].",
+                cooking: "Coat diced chicken with cornstarch and flour, flash-fry until crisp. Toss minced ginger, garlic, green chilies, onions, and bell peppers in a hot wok with soy sauce and vinegar, then mix in chicken[cite: 1]."
+            },
+            {
+                name: "10. Crispy Chicken Strips",
+                kcal: "129 Kcals",
+                image: "https://i.imghippo.com/files/VMY5403hg.png",
+                ingredients: "Chicken Tender/Breast Fillet (25g), Wheat Flour/Starch (12g), Cooking Oil (7g), Paprika, Black Pepper, Garlic Powder, Salt (3g)[cite: 1].",
+                scientific: "Triticum aestivum (Wheat flour), Gallus gallus domesticus (Chicken), Helianthus annuus / Glycine max (Oil), Capsicum annuum (Paprika)[cite: 1].",
+                cooking: "Trim tenderloins into strips, dip in liquid wash, dredge thoroughly in seasoned wheat flour to create flaky crust, and deep-fry in hot oil until golden-brown and crunchy[cite: 1]."
+            },
+            {
+                name: "11. Egg Omelet",
+                kcal: "97 Kcals",
+                image: "https://i.imghippo.com/files/BQy2290jc.png",
+                ingredients: "Whole Egg (50g), Onions (10g), Tomatoes (10g), Cooking Oil/Butter (5g), Green Chillies & Coriander (3g), Salt & Black Pepper (2g)[cite: 1].",
+                scientific: "Gallus gallus domesticus (Egg), Allium cepa (Onion), Solanum lycopersicum (Tomato), Helianthus annuus / Bos taurus (Oil/Butter), Piper nigrum (Pepper)[cite: 1].",
+                cooking: "Whisk egg vigorously with salt and pepper. Mix in chopped onions, tomatoes, chillies, and coriander. Pour into heated oiled skillet, cook set base, and fold over before plating[cite: 1]."
+            },
+            {
+                name: "12. Fish Curry",
+                kcal: "320 Kcals",
+                image: "https://i.imghippo.com/files/rBD4777tE.png",
+                ingredients: "Fish Steaks/Fillets (140g), Coconut (40g), Onions & Tomatoes (40g), Cooking/Coconut Oil (15g), Tamarind Extract (10g), Ginger, Garlic, Green Chillies (8g), Turmeric, Coriander, Chili, Fenugreek, Mustard Seeds (7g)[cite: 1].",
+                scientific: "Rastrelliger kanagurta / Labeo rohita (Fish), Cocos nucifera (Coconut), Allium cepa & Solanum lycopersicum (Onion/Tomato), Tamarindus indica (Tamarind)[cite: 1].",
+                cooking: "Sputter mustard and fenugreek seeds in oil. Sauté onions, ginger, garlic, chilies, tomatoes, and spices. Blend grated coconut into paste, mix with tamarind extract and water, and simmer fish steaks gently[cite: 1]."
+            },
+            {
+                name: "13. Fish Fry or Fish Fingers",
+                kcal: "548 Kcals",
+                image: "https://i.imghippo.com/files/ipJx9403BA.png",
+                ingredients: "Fish Fillets (130g), Wheat Flour/Breadcrumbs (25g), Cooking Oil (25g), Egg (10g), Ginger-Garlic & Lemon Juice (5g), Chili Powder, Turmeric, Salt, Pepper (5g)[cite: 1].",
+                scientific: "Scomberomorus commerson / Pangasianodon hypophthalmus (Fish), Triticum aestivum (Wheat), Helianthus annuus / Arachis hypogaea (Oil), Gallus gallus domesticus (Egg)[cite: 1].",
+                cooking: "Marinate fish with lemon juice, salt, turmeric, and chili paste. Dip in beaten egg wash, dredge in breadcrumbs or wheat flour, and pan- or deep-fry until crisp and flaky[cite: 1]."
+            },
+            {
+                name: "14. Fish Tikka",
+                kcal: "292 Kcals",
+                image: "https://i.imghippo.com/files/MYox2036RMs.png",
+                ingredients: "Fish Chunks (120g), Yogurt (30g), Cooking/Mustard Oil (10g), Ginger-Garlic Paste (8g), Kashmiri Chili, Turmeric, Garam Masala, Ajwain (8g), Lemon Juice & Salt (4g)[cite: 1].",
+                scientific: "Pangasianodon hypophthalmus / Salmo salar (Fish), Bos taurus (Yogurt), Brassica juncea (Mustard Oil), Trachyspermum ammi (Ajwain)[cite: 1].",
+                cooking: "First marinate fish cubes with lemon juice, salt, and ginger-garlic. Prepare second marinade of hung yogurt, mustard oil, and spices, coat fish, thread onto skewers, and roast in tandoor[cite: 1]."
+            },
+            {
+                name: "15. Fried Prawns",
+                kcal: "613 Kcals",
+                image: "https://i.imghippo.com/files/vUR6319EO.png",
+                ingredients: "Prawns/Shrimp (180g), Semolina/Rava or Rice Flour (30g), Cooking Oil (35g), Ginger, Garlic, Lemon Juice (10g), Chili Powder, Turmeric, Pepper, Salt (10g), Curry Leaves & Coriander (5g)[cite: 1].",
+                scientific: "Penaeus monodon / Litopenaeus vannamei (Prawns), Triticum durum / Oryza sativa (Semolina/Rice), Helianthus annuus / Cocos nucifera (Oil)[cite: 1].",
+                cooking: "Marinate cleaned prawns with lemon juice, turmeric, salt, and chili powder. Dredge individually in dry semolina or rice flour with spices, and shallow-fry on a tava with curry leaves until crisp[cite: 1]."
+            },
+            {
+                name: "16. Hot & Crispy Chicken",
+                kcal: "200 Kcals",
+                image: "https://i.imghippo.com/files/TPNq1564TA.png",
+                ingredients: "Bone-in Chicken Piece (65g), Wheat Flour/Starch Breading (25g), Cooking Oil (15g), Paprika, Black Pepper, Garlic Powder, White Pepper, Salt (5g)[cite: 1].",
+                scientific: "Gallus gallus domesticus (Chicken), Triticum aestivum (Wheat), Glycine max / Brassica napus (Oil), Capsicum annuum & Piper nigrum (Spices)[cite: 1].",
+                cooking: "Marinate chicken with brine and spices, dip in liquid batter, vigorously press into seasoned wheat flour for rough flakes, and deep-fry under precise temperature control[cite: 1]."
+            },
+            {
+                name: "17. Hot Chicken Wings",
+                kcal: "160 Kcals",
+                image: "https://i.imghippo.com/files/yml7867HhY.png",
+                ingredients: "Chicken Wings (38g), Cooking Oil/Butter (10g), Hot Sauce/Chili Glaze (8g), Wheat Flour (3g), Cayenne Pepper, Garlic Powder, Salt (1g)[cite: 1].",
+                scientific: "Gallus gallus domesticus (Chicken), Helianthus annuus / Arachis hypogaea (Oil), Capsicum annuum (Cayenne), Bos taurus (Butter)[cite: 1].",
+                cooking: "Trim wings, dust lightly with flour, deep-fry or bake until crisp. Prepare sauce from melted butter, cayenne pepper, vinegar, and garlic, and toss hot crispy wings in glaze[cite: 1]."
+            },
+            {
+                name: "18. Lamb Fry or Chop",
+                kcal: "423 Kcals",
+                image: "https://i.imghippo.com/files/PSf8692MxE.png",
+                ingredients: "Lamb Chops (110g), Wheat Flour/Breadcrumbs (20g), Cooking Oil/Ghee (20g), Egg (10g), Ginger-Garlic & Lemon Juice (8g), Black Pepper, Cumin, Coriander, Turmeric, Salt (7g), Fresh Herbs (5g)[cite: 1].",
+                scientific: "Ovis aries (Lamb), Triticum aestivum (Wheat), Helianthus annuus / Arachis hypogaea (Oil), Gallus gallus domesticus (Egg)[cite: 1].",
+                cooking: "Marinate lamb chops with lemon juice, ginger-garlic, and spices. Dip in beaten egg wash, dredge in breadcrumbs or wheat flour, and shallow-fry on medium-high heat until golden and crispy[cite: 1]."
+            },
+            {
+                name: "19. Mughlai Egg Curry",
+                kcal: "365 Kcals",
+                image: "https://i.imghippo.com/files/W6423Wc.png",
+                ingredients: "Boiled Eggs (100g / 2 nos), Onions & Tomatoes (75g), Yogurt/Cream/Cashew Paste (30g), Cooking Oil/Ghee (20g), Ginger-Garlic Paste (10g), Spices & Cardamom, Cloves (10g), Coriander Leaves & Water[cite: 1].",
+                scientific: "Gallus gallus domesticus (Egg), Bos taurus / Anacardium occidentale (Dairy/Cashew), Allium cepa & Solanum lycopersicum (Onion/Tomato), Elettaria cardamomum & Syzygium aromaticum (Spices)[cite: 1].",
+                cooking: "Boil and lightly fry eggs with turmeric. Sauté minced onions in ghee, add ginger-garlic and pureed tomatoes. Stir in yogurt, cream, or cashew paste with warm spices, slip in eggs, and simmer[cite: 1]."
+            },
+            {
+                name: "20. Mutton Biriyani",
+                kcal: "1181 Kcals",
+                image: "https://i.imghippo.com/files/xVWl4510XtI.png",
+                ingredients: "Basmati Rice (200g), Mutton/Goat Meat (160g), Ghee or Cooking Oil (40g), Onions & Tomatoes (80g), Yogurt (50g), Ginger-Garlic-Chili Paste (15g), Whole Spices & Saffron (15g), Mint & Coriander (10g)[cite: 1].",
+                scientific: "Oryza sativa (Rice), Capra hircus / Ovis aries (Mutton), Bos taurus (Yogurt/Ghee), Allium cepa & Solanum lycopersicum (Onions/Tomatoes)[cite: 1].",
+                cooking: "Marinate mutton extensively with yogurt, ginger-garlic, and spices. Parboil basmati rice. Layer rice and cooked mutton masala in a heavy pot with fried onions, mint, ghee, and saffron, seal with dum, and slow cook[cite: 1]."
+            },
+            {
+                name: "21. Mutton Cutlet",
+                kcal: "670 Kcals",
+                image: "https://i.imghippo.com/files/Ilkd2781ug.png",
+                ingredients: "Minced Mutton / Keema (100g), Potatoes (50g), Wheat Flour / Breadcrumbs (25g), Cooking Oil (25g), Egg (10g), Onions & Green Chillies (7g), Ginger-Garlic, Garam Masala, Cumin, Pepper, Salt (3g)[cite: 1].",
+                scientific: "Ovis aries (Mutton), Solanum tuberosum (Potato), Triticum aestivum (Wheat), Helianthus annuus (Oil), Gallus gallus domesticus (Egg)[cite: 1].",
+                cooking: "Cook minced mutton with onions, ginger-garlic, and spices, then combine with boiled, mashed potatoes. Shape into flat patties, dip in egg wash, dredge in breadcrumbs, and shallow-fry until golden-brown[cite: 1]."
+            },
+            {
+                name: "22. Mutton Gravy or Kari",
+                kcal: "982 Kcals",
+                image: "https://i.imghippo.com/files/Pnp1637vSs.png",
+                ingredients: "Mutton/Goat Meat with Bone (150g), Onions & Tomatoes (70g), Cooking Oil or Ghee (30g), Ginger-Garlic Paste (12g), Coriander, Chili, Turmeric, Garam Masala, Cumin, Cloves, Cinnamon (10g), Coriander Leaves, Water & Salt[cite: 1].",
+                scientific: "Ovis aries / Capra hircus (Mutton), Helianthus annuus / Bos taurus (Oil/Ghee), Allium cepa & Solanum lycopersicum (Onions/Tomatoes), Cinnamomum verum & Syzygium aromaticum (Spices)[cite: 1].",
+                cooking: "Sauté sliced onions in oil/ghee, add ginger-garlic and chopped tomatoes. Bloom ground spices, sear bone-in mutton pieces, add water, and pressure cook or simmer until tender and rich[cite: 1]."
+            },
+            {
+                name: "23. Pepper Chicken",
+                kcal: "565 Kcals",
+                image: "https://i.imghippo.com/files/rTT5695E.png",
+                ingredients: "Chicken Drumsticks / Bone-in Pieces (180g), Black Pepper (15g), Onions & Tomatoes (50g), Cooking Oil or Ghee (20g), Ginger-Garlic Paste (12g), Curry Leaves & Coriander (5g), Salt & Water[cite: 1].",
+                scientific: "Gallus gallus domesticus (Chicken), Piper nigrum (Black Pepper), Helianthus annuus / Bos taurus (Oil/Ghee), Allium cepa & Solanum lycopersicum (Onion/Tomato), Murraya koenigii (Curry leaves)[cite: 1].",
+                cooking: "Sauté curry leaves and onions in hot oil/ghee. Add ginger-garlic and chicken drumsticks, sear until golden. Stir in freshly cracked black pepper and tomatoes, add water, and simmer into thick masala[cite: 1]."
+            },
+            {
+                name: "24. Reshmi or Silk Chicken",
+                kcal: "388 Kcals",
+                image: "https://i.imghippo.com/files/Obr9893dU.png",
+                ingredients: "Boneless Chicken Breast/Thigh (110g), Yogurt & Fresh Cream (30g), Cashew Nut/Almond Paste (15g), Cooking Oil/Butter (12g), Ginger-Garlic & Green Chili Paste (8g), White Pepper, Cardamom Powder, Garam Masala, Salt (5g)[cite: 1].",
+                scientific: "Gallus gallus domesticus (Chicken), Bos taurus (Yogurt/Cream/Butter), Anacardium occidentale (Cashew nut), Piper nigrum (White Pepper)[cite: 1].",
+                cooking: "Blend yogurt, cream, soaked cashew paste, ginger-garlic, white pepper, and cardamom into a rich marinade. Coat chicken pieces, refrigerate, thread onto skewers, and grill with butter basting[cite: 1]."
+            },
+            {
+                name: "25. Tandoori Chicken",
+                kcal: "263 Kcals",
+                image: "https://i.imghippo.com/files/q1959VfM.png",
+                ingredients: "Chicken Leg/Breast Quarter (140g), Yogurt (35g), Mustard Oil or Ghee (10g), Lemon Juice & Ginger-Garlic Paste (8g), Kashmiri Chili, Turmeric, Cumin, Coriander, Garam Masala, Kasuri Methi (7g), Salt[cite: 1].",
+                scientific: "Gallus gallus domesticus (Chicken), Bos taurus (Yogurt), Brassica juncea (Mustard Oil), Capsicum annuum & Trigonella foenum-graecum (Chili/Fenugreek)[cite: 1].",
+                cooking: "Score chicken pieces, rub with lemon juice, salt, and ginger-garlic. Apply second thick marinade of hung yogurt, mustard oil, and spices, marinate for hours, and roast in a blazing clay tandoor[cite: 1]."
+            }
+        ];
+
+        function getDynamicPassword() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            return day + month;
+        }
+
+        function verifyPassword() {
+            const inputVal = document.getElementById('password-input').value.trim();
+            const correctPassword = getDynamicPassword();
+            const errorMsg = document.getElementById('error-message');
+
+            if (inputVal === correctPassword) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+                renderDishes(dishes);
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('password-input').value = '';
+            }
+        }
+
+        function renderDishes(data) {
+            const grid = document.getElementById('dishes-grid');
+            grid.innerHTML = '';
+
+            if (data.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No matching culinary items found.</p>';
+                return;
+            }
+
+            data.forEach(dish => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-img-container">
+                        <img src="${dish.image}" alt="${dish.name}" loading="lazy">
+                        <div class="badge-kcal">${dish.kcal}</div>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="card-title">${dish.name}</h3>
+                        <div class="section-block">
+                            <h4>Ingredients</h4>
+                            <p>${dish.ingredients}</p>
+                        </div>
+                        <div class="section-block">
+                            <h4>Scientific Classification</h4>
+                            <p>${dish.scientific}</p>
+                        </div>
+                        <div class="section-block">
+                            <h4>Cooking Methods</h4>
+                            <p>${dish.cooking}</p>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterDishes() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const filtered = dishes.filter(dish => {
+                return dish.name.toLowerCase().includes(query) ||
+                       dish.kcal.toLowerCase().includes(query) ||
+                       dish.ingredients.toLowerCase().includes(query) ||
+                       dish.scientific.toLowerCase().includes(query) ||
+                       dish.cooking.toLowerCase().includes(query);
+            });
+            renderDishes(filtered);
+        }
+
+        document.getElementById('password-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                verifyPassword();
+            }
+        });
+    </script>
+</body>
+</html>
